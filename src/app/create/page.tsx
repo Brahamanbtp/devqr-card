@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import html2canvas from "html2canvas";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function CreateCard() {
   const [form, setForm] = useState({
@@ -30,21 +31,54 @@ export default function CreateCard() {
 
   const handleSaveLocal = () => {
     localStorage.setItem("devqrcard-profile", JSON.stringify(form));
-    alert("Profile saved to local storage ✅");
+    toast.success("Profile saved locally ✅");
   };
 
-  const handleDownload = async () => {
+  const handleDownloadCard = async () => {
     if (cardRef.current) {
       const canvas = await html2canvas(cardRef.current);
       const link = document.createElement("a");
       link.download = "devqr-card.png";
       link.href = canvas.toDataURL("image/png");
       link.click();
+      toast.success("Card image downloaded 🎉");
     }
+  };
+
+  const handleDownloadQR = () => {
+    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+    if (canvas) {
+      const link = document.createElement("a");
+      link.download = "devqr-qr.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success("QR code downloaded 🧾");
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(profileUrl);
+    toast.success("Profile link copied 📋");
+  };
+
+  const renderSkills = () => {
+    return form.skills
+      .split(",")
+      .map((skill) => skill.trim())
+      .filter(Boolean)
+      .map((skill, i) => (
+        <span
+          key={i}
+          className="inline-block bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-100 px-2 py-1 rounded-full text-xs mr-1 mb-1"
+        >
+          {skill}
+        </span>
+      ));
   };
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-6 py-10">
+      <Toaster position="top-right" />
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Form Section */}
         <section>
@@ -52,49 +86,16 @@ export default function CreateCard() {
             Create Your DevQRCard
           </h1>
           <form className="flex flex-col gap-4">
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Full Name"
-              className="border px-4 py-2 rounded-md"
-            />
-            <textarea
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-              placeholder="Short Bio / Tagline"
-              rows={2}
-              className="border px-4 py-2 rounded-md resize-none"
-            />
-            <input
-              name="github"
-              value={form.github}
-              onChange={handleChange}
-              placeholder="GitHub URL"
-              className="border px-4 py-2 rounded-md"
-            />
-            <input
-              name="linkedin"
-              value={form.linkedin}
-              onChange={handleChange}
-              placeholder="LinkedIn URL"
-              className="border px-4 py-2 rounded-md"
-            />
-            <input
-              name="website"
-              value={form.website}
-              onChange={handleChange}
-              placeholder="Portfolio/Website URL"
-              className="border px-4 py-2 rounded-md"
-            />
-            <input
-              name="skills"
-              value={form.skills}
-              onChange={handleChange}
-              placeholder="Skills (comma separated)"
-              className="border px-4 py-2 rounded-md"
-            />
+            {["name", "bio", "github", "linkedin", "website", "skills"].map((field) => (
+              <input
+                key={field}
+                name={field}
+                value={form[field as keyof typeof form]}
+                onChange={handleChange}
+                placeholder={field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                className="border px-4 py-2 rounded-md"
+              />
+            ))}
             <select
               name="theme"
               value={form.theme}
@@ -111,7 +112,9 @@ export default function CreateCard() {
         <section className="flex flex-col items-center gap-6">
           <div
             ref={cardRef}
-            className="w-full max-w-sm border p-6 rounded-lg shadow-md bg-white dark:bg-gray-900"
+            className={`w-full max-w-sm border p-6 rounded-lg shadow-md ${
+              form.theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-black"
+            }`}
           >
             <h2 className="text-xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">
               Preview
@@ -121,18 +124,24 @@ export default function CreateCard() {
               {form.bio || "Short bio goes here..."}
             </p>
             <div className="mt-4 space-y-1 text-sm">
-              {form.github && <p>GitHub: {form.github}</p>}
-              {form.linkedin && <p>LinkedIn: {form.linkedin}</p>}
-              {form.website && <p>Website: {form.website}</p>}
-              {form.skills && <p>Skills: {form.skills}</p>}
+              {form.github && <p>GitHub: <a href={form.github} className="underline text-blue-500" target="_blank">{form.github}</a></p>}
+              {form.linkedin && <p>LinkedIn: <a href={form.linkedin} className="underline text-blue-500" target="_blank">{form.linkedin}</a></p>}
+              {form.website && <p>Website: <a href={form.website} className="underline text-blue-500" target="_blank">{form.website}</a></p>}
+              {form.skills && <div className="flex flex-wrap mt-2">{renderSkills()}</div>}
             </div>
             <div className="mt-4 text-center">
               <QRCodeCanvas value={profileUrl} size={128} />
               <p className="text-xs mt-2 break-all">{profileUrl}</p>
+              <button
+                onClick={copyLink}
+                className="text-sm mt-1 text-blue-500 underline hover:text-blue-700"
+              >
+                Copy Link
+              </button>
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4 justify-center">
             <button
               onClick={handleSaveLocal}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
@@ -140,17 +149,20 @@ export default function CreateCard() {
               Save to Local
             </button>
             <button
-              onClick={handleDownload}
-              className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-600"
+              onClick={handleDownloadCard}
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
             >
-              Download
+              Download Card
+            </button>
+            <button
+              onClick={handleDownloadQR}
+              className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600"
+            >
+              Download QR
             </button>
           </div>
 
-          <Link
-            href="/"
-            className="text-blue-600 hover:underline text-sm"
-          >
+          <Link href="/" className="text-blue-600 hover:underline text-sm">
             ← Back to Home
           </Link>
         </section>
