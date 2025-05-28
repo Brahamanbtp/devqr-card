@@ -1,20 +1,40 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "sonner";
+import { Footer } from "@/components/footer"; // ✅ Importing the enhanced Footer
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://devqrcard.vercel.app"), // Use your real domain when deploying
   title: "DevQRCard",
-  description: "Create and share your developer QR profile card",
+  description: "Your Developer Identity QR Card",
+  openGraph: {
+    title: "DevQRCard",
+    description: "Create and share your developer identity card with QR",
+    url: "https://devqrcard.vercel.app",
+    siteName: "DevQRCard",
+    images: ["/og-image.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DevQRCard",
+    description: "Developer portfolio meets QR card",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
@@ -25,9 +45,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
       >
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+          <Footer /> {/* ✅ Added the enhanced footer here */}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   );
