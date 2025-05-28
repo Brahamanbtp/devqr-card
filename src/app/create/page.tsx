@@ -1,13 +1,25 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import html2canvas from "html2canvas";
-import toast, { Toaster } from "react-hot-toast";
+import Image from "next/image";
+
+// Define the structure for a card profile
+interface ProfileCard {
+  name: string;
+  bio: string;
+  github: string;
+  linkedin: string;
+  website: string;
+  skills: string;
+  theme: string;
+  image: string;
+}
 
 export default function CreateCard() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ProfileCard>({
     name: "",
     bio: "",
     github: "",
@@ -15,70 +27,59 @@ export default function CreateCard() {
     website: "",
     skills: "",
     theme: "light",
+    image: ""
   });
 
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [savedCards, setSavedCards] = useState<ProfileCard[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("default");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("devqrcard-profiles");
+    if (stored) setSavedCards(JSON.parse(stored));
+  }, []);
 
   const profileUrl = `https://devqrcard.com/card/${encodeURIComponent(
     form.name.toLowerCase().replace(/\s+/g, "-")
   )}`;
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSaveLocal = () => {
-    localStorage.setItem("devqrcard-profile", JSON.stringify(form));
-    toast.success("Profile saved locally ✅");
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setForm({ ...form, image: reader.result });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleDownloadCard = async () => {
+  const handleSaveLocal = () => {
+    const updated = [...savedCards, form];
+    setSavedCards(updated);
+    localStorage.setItem("devqrcard-profiles", JSON.stringify(updated));
+    alert("Card saved ✅");
+  };
+
+  const handleDownload = async () => {
     if (cardRef.current) {
       const canvas = await html2canvas(cardRef.current);
       const link = document.createElement("a");
       link.download = "devqr-card.png";
       link.href = canvas.toDataURL("image/png");
       link.click();
-      toast.success("Card image downloaded 🎉");
     }
-  };
-
-  const handleDownloadQR = () => {
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
-    if (canvas) {
-      const link = document.createElement("a");
-      link.download = "devqr-qr.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      toast.success("QR code downloaded 🧾");
-    }
-  };
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(profileUrl);
-    toast.success("Profile link copied 📋");
-  };
-
-  const renderSkills = () => {
-    return form.skills
-      .split(",")
-      .map((skill) => skill.trim())
-      .filter(Boolean)
-      .map((skill, i) => (
-        <span
-          key={i}
-          className="inline-block bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-100 px-2 py-1 rounded-full text-xs mr-1 mb-1"
-        >
-          {skill}
-        </span>
-      ));
   };
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-6 py-10">
-      <Toaster position="top-right" />
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Form Section */}
         <section>
@@ -86,85 +87,76 @@ export default function CreateCard() {
             Create Your DevQRCard
           </h1>
           <form className="flex flex-col gap-4">
-            {["name", "bio", "github", "linkedin", "website", "skills"].map((field) => (
-              <input
-                key={field}
-                name={field}
-                value={form[field as keyof typeof form]}
-                onChange={handleChange}
-                placeholder={field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
-                className="border px-4 py-2 rounded-md"
-              />
-            ))}
-            <select
-              name="theme"
-              value={form.theme}
-              onChange={handleChange}
-              className="border px-4 py-2 rounded-md"
-            >
+            <input name="name" value={form.name} onChange={handleChange} placeholder="Full Name" className="border px-4 py-2 rounded-md" />
+            <textarea name="bio" value={form.bio} onChange={handleChange} placeholder="Short Bio / Tagline" rows={2} className="border px-4 py-2 rounded-md resize-none" />
+            <input name="github" value={form.github} onChange={handleChange} placeholder="GitHub URL" className="border px-4 py-2 rounded-md" />
+            <input name="linkedin" value={form.linkedin} onChange={handleChange} placeholder="LinkedIn URL" className="border px-4 py-2 rounded-md" />
+            <input name="website" value={form.website} onChange={handleChange} placeholder="Portfolio/Website URL" className="border px-4 py-2 rounded-md" />
+            <input name="skills" value={form.skills} onChange={handleChange} placeholder="Skills (comma separated)" className="border px-4 py-2 rounded-md" />
+            <select name="theme" value={form.theme} onChange={handleChange} className="border px-4 py-2 rounded-md">
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
+            <select value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)} className="border px-4 py-2 rounded-md">
+              <option value="default">Default</option>
+              <option value="modern">Modern</option>
+              <option value="minimal">Minimal</option>
+            </select>
+            <input type="file" accept="image/*" onChange={handleImageUpload} ref={fileInputRef} className="border px-4 py-2 rounded-md" />
           </form>
         </section>
 
         {/* Preview Section */}
         <section className="flex flex-col items-center gap-6">
-          <div
-            ref={cardRef}
-            className={`w-full max-w-sm border p-6 rounded-lg shadow-md ${
-              form.theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-black"
-            }`}
-          >
+          <div ref={cardRef} className={`w-full max-w-sm border p-6 rounded-lg shadow-md bg-white dark:bg-gray-900 ${selectedTemplate}`}>
             <h2 className="text-xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">
               Preview
             </h2>
-            <p className="text-lg font-semibold">{form.name || "Your Name"}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-300">
-              {form.bio || "Short bio goes here..."}
-            </p>
+            {form.image && (
+              <div className="w-24 h-24 mx-auto rounded-full overflow-hidden">
+                <Image src={form.image} alt="Profile" width={96} height={96} />
+              </div>
+            )}
+            <p className="text-lg font-semibold mt-2">{form.name || "Your Name"}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-300">{form.bio || "Short bio goes here..."}</p>
             <div className="mt-4 space-y-1 text-sm">
-              {form.github && <p>GitHub: <a href={form.github} className="underline text-blue-500" target="_blank">{form.github}</a></p>}
-              {form.linkedin && <p>LinkedIn: <a href={form.linkedin} className="underline text-blue-500" target="_blank">{form.linkedin}</a></p>}
-              {form.website && <p>Website: <a href={form.website} className="underline text-blue-500" target="_blank">{form.website}</a></p>}
-              {form.skills && <div className="flex flex-wrap mt-2">{renderSkills()}</div>}
+              {form.github && <p>GitHub: {form.github}</p>}
+              {form.linkedin && <p>LinkedIn: {form.linkedin}</p>}
+              {form.website && <p>Website: {form.website}</p>}
+              {form.skills && <p>Skills: {form.skills}</p>}
             </div>
             <div className="mt-4 text-center">
               <QRCodeCanvas value={profileUrl} size={128} />
               <p className="text-xs mt-2 break-all">{profileUrl}</p>
-              <button
-                onClick={copyLink}
-                className="text-sm mt-1 text-blue-500 underline hover:text-blue-700"
-              >
-                Copy Link
-              </button>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 justify-center">
-            <button
-              onClick={handleSaveLocal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
+          <div className="flex gap-4">
+            <button onClick={handleSaveLocal} className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
               Save to Local
             </button>
-            <button
-              onClick={handleDownloadCard}
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-            >
-              Download Card
-            </button>
-            <button
-              onClick={handleDownloadQR}
-              className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600"
-            >
-              Download QR
+            <button onClick={handleDownload} className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-600">
+              Download
             </button>
           </div>
 
           <Link href="/" className="text-blue-600 hover:underline text-sm">
             ← Back to Home
           </Link>
+
+          {/* Saved Cards Preview */}
+          {savedCards.length > 0 && (
+            <div className="mt-10 w-full">
+              <h3 className="text-md font-semibold mb-2">Saved Cards:</h3>
+              <ul className="space-y-2">
+                {savedCards.map((card, index) => (
+                  <li key={index} className="p-2 border rounded shadow">
+                    <strong>{card.name}</strong> - {card.bio}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
       </div>
     </main>
