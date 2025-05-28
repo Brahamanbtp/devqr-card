@@ -25,7 +25,6 @@ export default function Home() {
 
       {/* Main Content */}
       <section className="flex flex-col items-center justify-center flex-1 px-4 sm:px-8 py-20 text-center">
-        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -41,7 +40,6 @@ export default function Home() {
           />
         </motion.div>
 
-        {/* Heading */}
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -51,7 +49,6 @@ export default function Home() {
           DevQRCard 🚀
         </motion.h1>
 
-        {/* Subheading */}
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -61,7 +58,6 @@ export default function Home() {
           Build your developer profile, showcase your work, and share it instantly — all in one QR-powered identity card.
         </motion.p>
 
-        {/* Actions */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -86,10 +82,8 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="w-full py-6 border-t border-muted text-sm text-muted-foreground text-center">
-        Built with ❤️ by <strong>DevQRCard</strong> © 2025
-      </footer>
+      {/* Reusable Footer Component */}
+      <Footer />
     </main>
   );
 }
