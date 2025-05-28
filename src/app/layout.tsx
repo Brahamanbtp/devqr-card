@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
-import { Footer } from "@/components/footer"; // ✅ Importing the enhanced Footer
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://devqrcard.vercel.app"), // Use your real domain when deploying
+  metadataBase: new URL("https://devqrcard.vercel.app"),
   title: "DevQRCard",
   description: "Your Developer Identity QR Card",
   openGraph: {
@@ -49,7 +48,6 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-          <Footer /> {/* ✅ Added the enhanced footer here */}
           <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
