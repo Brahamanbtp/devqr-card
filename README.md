@@ -16,7 +16,6 @@
 - 📸 Profile Picture Upload
 - 📱 QR Code Generation for Sharing
 - 🗂️ Persistent Storage for Multiple Cards
-- 🔒 Role-based Dashboard (Student, Faculty, Parent)
 - 📤 Export as PDF / Shareable Link
 - 🌙 Light/Dark Mode Support
 - 🔧 Built with **Next.js 15**, **Tailwind CSS**, **Framer Motion**, **TypeScript**
