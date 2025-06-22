@@ -1,7 +1,6 @@
-// src/components/CreateCard.tsx
 "use client";
 
-import { useState, useRef, useEffect, ChangeEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
@@ -9,6 +8,7 @@ import html2canvas from "html2canvas";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 
+// Card structure
 interface ProfileCard {
   id: string;
   name: string;
@@ -21,7 +21,7 @@ interface ProfileCard {
   image: string;
 }
 
-export default function CreateCard() {
+function CreateCardInner() {
   const [form, setForm] = useState<ProfileCard>({
     id: uuidv4(),
     name: "",
@@ -31,7 +31,7 @@ export default function CreateCard() {
     website: "",
     skills: "",
     theme: "light",
-    image: "",
+    image: ""
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState("default");
@@ -40,6 +40,7 @@ export default function CreateCard() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // Load existing card
   useEffect(() => {
     const editId = searchParams.get("id");
     if (editId) {
@@ -73,13 +74,11 @@ export default function CreateCard() {
   const handleSaveLocal = () => {
     const existing = JSON.parse(localStorage.getItem("devqr-cards") || "[]");
     const index = existing.findIndex((card: ProfileCard) => card.id === form.id);
-
     if (index !== -1) {
       existing[index] = form;
     } else {
       existing.push(form);
     }
-
     localStorage.setItem("devqr-cards", JSON.stringify(existing));
     alert("Card saved ✅");
     router.push("/dashboard");
@@ -98,6 +97,7 @@ export default function CreateCard() {
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-6 py-10">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
+        {/* Form Section */}
         <section>
           <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400">
             {searchParams.get("id") ? "Edit Your DevQRCard" : "Create Your DevQRCard"}
@@ -122,11 +122,10 @@ export default function CreateCard() {
           </form>
         </section>
 
+        {/* Preview Section */}
         <section className="flex flex-col items-center gap-6">
           <div ref={cardRef} className={`w-full max-w-sm border p-6 rounded-lg shadow-md bg-white dark:bg-gray-900 ${selectedTemplate}`}>
-            <h2 className="text-xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">
-              Preview
-            </h2>
+            <h2 className="text-xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">Preview</h2>
             {form.image && (
               <div className="w-24 h-24 mx-auto rounded-full overflow-hidden">
                 <Image src={form.image} alt="Profile" width={96} height={96} />
@@ -155,11 +154,18 @@ export default function CreateCard() {
             </button>
           </div>
 
-          <Link href="/" className="text-blue-600 hover:underline text-sm">
-            ← Back to Home
-          </Link>
+          <Link href="/" className="text-blue-600 hover:underline text-sm">← Back to Home</Link>
         </section>
       </div>
     </main>
+  );
+}
+
+// Final export with Suspense wrapper
+export default function CreateCard() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center">Loading...</div>}>
+      <CreateCardInner />
+    </Suspense>
   );
 }
