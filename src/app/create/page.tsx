@@ -1,3 +1,4 @@
+// src/components/CreateCard.tsx
 "use client";
 
 import { useState, useRef, useEffect, ChangeEvent } from "react";
@@ -8,7 +9,6 @@ import html2canvas from "html2canvas";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 
-// Define the structure for a card profile
 interface ProfileCard {
   id: string;
   name: string;
@@ -31,7 +31,7 @@ export default function CreateCard() {
     website: "",
     skills: "",
     theme: "light",
-    image: ""
+    image: "",
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState("default");
@@ -40,7 +40,6 @@ export default function CreateCard() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Load card for editing
   useEffect(() => {
     const editId = searchParams.get("id");
     if (editId) {
@@ -76,9 +75,9 @@ export default function CreateCard() {
     const index = existing.findIndex((card: ProfileCard) => card.id === form.id);
 
     if (index !== -1) {
-      existing[index] = form; // update existing card
+      existing[index] = form;
     } else {
-      existing.push(form); // new card
+      existing.push(form);
     }
 
     localStorage.setItem("devqr-cards", JSON.stringify(existing));
@@ -99,7 +98,6 @@ export default function CreateCard() {
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] px-6 py-10">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* Form Section */}
         <section>
           <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400">
             {searchParams.get("id") ? "Edit Your DevQRCard" : "Create Your DevQRCard"}
@@ -124,7 +122,6 @@ export default function CreateCard() {
           </form>
         </section>
 
-        {/* Preview Section */}
         <section className="flex flex-col items-center gap-6">
           <div ref={cardRef} className={`w-full max-w-sm border p-6 rounded-lg shadow-md bg-white dark:bg-gray-900 ${selectedTemplate}`}>
             <h2 className="text-xl font-bold text-center mb-2 text-blue-600 dark:text-blue-400">
