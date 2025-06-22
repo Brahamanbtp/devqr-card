@@ -1,5 +1,7 @@
+// src/app/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -8,13 +10,36 @@ import { Footer } from "@/components/footer";
 import Link from "next/link";
 import Head from "next/head";
 
+interface ProfileCard {
+  id: string;
+  name: string;
+  title: string;
+  image: string;
+  qrData: string;
+  template: string;
+}
+
 export default function Home() {
   const router = useRouter();
+  const [cards, setCards] = useState<ProfileCard[]>([]);
 
   const handleCreateClick = () => {
     setTimeout(() => {
       router.push("/create");
     }, 200);
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem("devqr-cards");
+    if (saved) {
+      const parsed = JSON.parse(saved) as ProfileCard[];
+      setCards(parsed);
+    }
+  }, []);
+
+  const handleCardClick = (card: ProfileCard) => {
+    localStorage.setItem("selected-devqr-card", JSON.stringify(card));
+    router.push("/card/preview");
   };
 
   return (
@@ -42,7 +67,7 @@ export default function Home() {
           <ThemeToggle />
         </motion.div>
 
-        {/* Main Content */}
+        {/* Hero Content */}
         <section className="flex flex-col items-center justify-center flex-1 px-4 sm:px-8 py-20 text-center relative z-10">
           <motion.div
             initial={{ rotate: 0 }}
@@ -77,7 +102,6 @@ export default function Home() {
             Build your developer profile, showcase your work, and share it instantly — all in one QR-powered identity card.
           </motion.p>
 
-          {/* Feature List */}
           <motion.ul
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -90,7 +114,6 @@ export default function Home() {
             <li>📤 Export/share with custom URL</li>
           </motion.ul>
 
-          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -99,7 +122,6 @@ export default function Home() {
           >
             <button
               onClick={handleCreateClick}
-              aria-label="Create DevQRCard"
               className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
             >
               Create Your Card
@@ -110,7 +132,6 @@ export default function Home() {
               target="_blank"
               rel="noopener noreferrer"
               className="border border-muted px-6 py-3 rounded-full hover:bg-muted transition"
-              aria-label="View on GitHub"
             >
               View on GitHub
             </Link>
@@ -125,7 +146,8 @@ export default function Home() {
           </motion.div>
         </section>
 
-        {/* Footer */}
+    
+
         <Footer />
       </main>
     </>
