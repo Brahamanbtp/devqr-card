@@ -1,6 +1,7 @@
 // src/app/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -9,8 +10,34 @@ import { Footer } from "@/components/footer";
 import Link from "next/link";
 import Head from "next/head";
 
+// Define the shape of each profile card
+interface ProfileCard {
+  id: string;
+  name: string;
+  title: string;
+  image: string;
+  qrData: string;
+  template: string;
+}
+
 export default function Home() {
   const router = useRouter();
+  const [cards, setCards] = useState<ProfileCard[]>([]);
+
+  // Fetch saved cards on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("devqr-cards");
+    if (saved) {
+      const parsed = JSON.parse(saved) as ProfileCard[];
+      setCards(parsed);
+    }
+  }, []);
+
+  // Redirect with selected card
+  const handleCardClick = (card: ProfileCard) => {
+    localStorage.setItem("selected-devqr-card", JSON.stringify(card));
+    router.push("/CardPreview");
+  };
 
   const handleCreateClick = () => {
     setTimeout(() => {
@@ -122,6 +149,32 @@ export default function Home() {
             />
           </motion.div>
         </section>
+
+        {/* Saved Cards */}
+        {cards.length > 0 && (
+          <section className="px-4 py-12 sm:px-8 text-center">
+            <h2 className="text-2xl font-semibold mb-6">Your Saved Cards</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="cursor-pointer border rounded-lg p-4 shadow hover:shadow-md transition"
+                  onClick={() => handleCardClick(card)}
+                >
+                  <Image
+                    src={card.image || "/default-avatar.png"}
+                    alt={card.name}
+                    width={80}
+                    height={80}
+                    className="rounded-full mx-auto mb-3 object-cover"
+                  />
+                  <h3 className="text-lg font-semibold">{card.name}</h3>
+                  <p className="text-sm text-muted-foreground">{card.title}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <Footer />
       </main>
