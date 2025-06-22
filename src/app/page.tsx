@@ -1,7 +1,6 @@
 // src/app/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -10,36 +9,13 @@ import { Footer } from "@/components/footer";
 import Link from "next/link";
 import Head from "next/head";
 
-interface ProfileCard {
-  id: string;
-  name: string;
-  title: string;
-  image: string;
-  qrData: string;
-  template: string;
-}
-
 export default function Home() {
   const router = useRouter();
-  const [cards, setCards] = useState<ProfileCard[]>([]);
 
   const handleCreateClick = () => {
     setTimeout(() => {
       router.push("/create");
     }, 200);
-  };
-
-  useEffect(() => {
-    const saved = localStorage.getItem("devqr-cards");
-    if (saved) {
-      const parsed = JSON.parse(saved) as ProfileCard[];
-      setCards(parsed);
-    }
-  }, []);
-
-  const handleCardClick = (card: ProfileCard) => {
-    localStorage.setItem("selected-devqr-card", JSON.stringify(card));
-    router.push("/card/preview");
   };
 
   return (
@@ -136,17 +112,16 @@ export default function Home() {
               View on GitHub
             </Link>
 
-            <img
+            <Image
               src="https://img.shields.io/github/stars/Brahamanbtp/devqr-card?style=social"
               alt="GitHub stars"
               width={110}
               height={20}
               className="mt-2"
+              unoptimized
             />
           </motion.div>
         </section>
-
-    
 
         <Footer />
       </main>
