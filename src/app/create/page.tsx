@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useRef, useEffect, ChangeEvent } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
 import html2canvas from "html2canvas";
 import Image from "next/image";
+import { v4 as uuidv4 } from "uuid";
 
 // Define the structure for a card profile
 interface ProfileCard {
+  id: string;
   name: string;
   bio: string;
   github: string;
@@ -20,6 +23,7 @@ interface ProfileCard {
 
 export default function CreateCard() {
   const [form, setForm] = useState<ProfileCard>({
+    id: uuidv4(),
     name: "",
     bio: "",
     github: "",
@@ -30,15 +34,21 @@ export default function CreateCard() {
     image: ""
   });
 
-  const [savedCards, setSavedCards] = useState<ProfileCard[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState("default");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
+  // Load card for editing
   useEffect(() => {
-    const stored = localStorage.getItem("devqrcard-profiles");
-    if (stored) setSavedCards(JSON.parse(stored));
-  }, []);
+    const editId = searchParams.get("id");
+    if (editId) {
+      const existing = JSON.parse(localStorage.getItem("devqr-cards") || "[]");
+      const match = existing.find((card: ProfileCard) => card.id === editId);
+      if (match) setForm(match);
+    }
+  }, [searchParams]);
 
   const profileUrl = `https://devqrcard.com/card/${encodeURIComponent(
     form.name.toLowerCase().replace(/\s+/g, "-")
@@ -62,17 +72,25 @@ export default function CreateCard() {
   };
 
   const handleSaveLocal = () => {
-    const updated = [...savedCards, form];
-    setSavedCards(updated);
-    localStorage.setItem("devqrcard-profiles", JSON.stringify(updated));
+    const existing = JSON.parse(localStorage.getItem("devqr-cards") || "[]");
+    const index = existing.findIndex((card: ProfileCard) => card.id === form.id);
+
+    if (index !== -1) {
+      existing[index] = form; // update existing card
+    } else {
+      existing.push(form); // new card
+    }
+
+    localStorage.setItem("devqr-cards", JSON.stringify(existing));
     alert("Card saved ✅");
+    router.push("/dashboard");
   };
 
   const handleDownload = async () => {
     if (cardRef.current) {
       const canvas = await html2canvas(cardRef.current);
       const link = document.createElement("a");
-      link.download = "devqr-card.png";
+      link.download = `${form.name || "devqr-card"}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
     }
@@ -84,7 +102,7 @@ export default function CreateCard() {
         {/* Form Section */}
         <section>
           <h1 className="text-3xl font-bold mb-6 text-blue-600 dark:text-blue-400">
-            Create Your DevQRCard
+            {searchParams.get("id") ? "Edit Your DevQRCard" : "Create Your DevQRCard"}
           </h1>
           <form className="flex flex-col gap-4">
             <input name="name" value={form.name} onChange={handleChange} placeholder="Full Name" className="border px-4 py-2 rounded-md" />
@@ -133,7 +151,7 @@ export default function CreateCard() {
 
           <div className="flex gap-4">
             <button onClick={handleSaveLocal} className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-              Save to Local
+              {searchParams.get("id") ? "Update" : "Save to Local"}
             </button>
             <button onClick={handleDownload} className="bg-gray-300 dark:bg-gray-700 text-black dark:text-white px-4 py-2 rounded-md hover:bg-gray-400 dark:hover:bg-gray-600">
               Download
@@ -143,20 +161,6 @@ export default function CreateCard() {
           <Link href="/" className="text-blue-600 hover:underline text-sm">
             ← Back to Home
           </Link>
-
-          {/* Saved Cards Preview */}
-          {savedCards.length > 0 && (
-            <div className="mt-10 w-full">
-              <h3 className="text-md font-semibold mb-2">Saved Cards:</h3>
-              <ul className="space-y-2">
-                {savedCards.map((card, index) => (
-                  <li key={index} className="p-2 border rounded shadow">
-                    <strong>{card.name}</strong> - {card.bio}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </section>
       </div>
     </main>
