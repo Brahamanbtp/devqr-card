@@ -1,32 +1,34 @@
 // src/components/CardPreview.tsx
+"use client";
+
 import React from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import Image from "next/image";
 
 interface CardPreviewProps {
-  id: string;
   name: string;
   title: string;
   qrData: string;
   image: string;
-  template: string;
 }
 
 export default function CardPreview({
-  id,
   name,
   title,
   qrData,
   image,
-  template,
 }: CardPreviewProps) {
   return (
-    <div className={`border rounded-lg p-4 shadow-md bg-white dark:bg-gray-900`}>
+    <div className="border rounded-lg p-4 shadow-md bg-white dark:bg-gray-900">
       <div className="flex flex-col items-center">
         {image && (
-          <img
+          <Image
             src={image}
-            alt="Profile"
-            className="w-20 h-20 rounded-full object-cover mb-2"
+            alt={`${name}'s profile`}
+            width={80}
+            height={80}
+            className="rounded-full object-cover mb-2"
+            unoptimized // Optional: Use remotePatterns in next.config.js for better LCP
           />
         )}
         <h2 className="text-lg font-semibold">{name}</h2>
